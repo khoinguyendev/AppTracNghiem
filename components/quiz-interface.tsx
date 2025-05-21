@@ -275,7 +275,7 @@ window.scrollTo({ top: 0, behavior: 'smooth' });
 
       {/* Dialog hiển thị kết quả */}
       {userAnswers.length > 0 && showResults && <Dialog open={showResults} onOpenChange={setShowResults}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-auto">
           <DialogHeader>
             <DialogTitle>Kết quả bài làm</DialogTitle>
             <DialogDescription>Bạn đã hoàn thành bài trắc nghiệm!</DialogDescription>
@@ -291,15 +291,15 @@ window.scrollTo({ top: 0, behavior: 'smooth' });
               {questions.map((question, index) => (
                 <div key={index} className="flex items-center text-sm">
                   <div
-                    className={`w-6 h-6 rounded-full flex items-center justify-center mr-2 ${userAnswers[index].correct
+                    className={`w-6 h-6 rounded-full flex items-center justify-center mr-2 ${userAnswers[index]?.correct
                       ? "bg-green-100 text-green-700"
                       : "bg-red-100 text-red-700"
                       }`}
                   >
-                    {userAnswers[index].correct ? "✓" : "✗"}
+                    {userAnswers[index]?.correct ? "✓" : "✗"}
                   </div>
                   <span className="truncate">
-                    Câu {index + 1}: {userAnswers[index].value || "Chưa trả lời"}
+                    Câu {index + 1}: {userAnswers[index]?.value || "Chưa trả lời"}
                   </span>
                 </div>
               ))}
