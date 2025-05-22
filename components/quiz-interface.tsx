@@ -25,8 +25,8 @@ import { IExam } from "@/types/Exam"
 
 type UserAnswer = {
   questionId: Key;
-  value: string;
-  correct: boolean;
+  value: string | null;
+  correct: boolean | null;
 };
 export default function QuizInterface() {
   const [questions, setQuestions] = useState<IQuestion[]>([])
@@ -36,41 +36,41 @@ export default function QuizInterface() {
   // const [timeLeft, setTimeLeft] = useState(15 * 60) // 15 phút tính bằng giây
   const [isFinished, setIsFinished] = useState(false)
   const [showResults, setShowResults] = useState(false)
+  const [showAnswer, setShowAnswer] = useState(false)
+
   const [score, setScore] = useState(0)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [isLoading, setIsLoading] = useState(false);
   const isMobile = useMediaQuery("(max-width: 768px)")
-
+  const [load, setLoad] = useState(false);
 
 
   // Xử lý khi người dùng chọn đáp án
-  const handleAnswerChange = (value: string) => {
-    const correct = currentQuestion.answer.find((a) => a.content === value)?.is_correct ?? false;
-    setUserAnswers((prev) => {
-      const existingIndex = prev.findIndex((a) => a.questionId === currentQuestion.id);
-      if (existingIndex !== -1) {
-        const updated = [...prev];
-        updated[existingIndex] = { questionId: currentQuestion.id, value, correct };
-        return updated;
-      }
-      return [...prev, { questionId: currentQuestion.id, value, correct }];
-    });
+  const handleAnswerChange = (value: string, correct: boolean) => {
+    const old = userAnswers[currentQuestionIndex];
+    userAnswers[currentQuestionIndex] = {
+      ...old,
+      value: value,
+      correct: correct
+    }
+    setLoad((pre) => !pre)
+
   };
 
   // Chuyển đến câu hỏi tiếp theo
   const goToNextQuestion = () => {
-  if (currentQuestionIndex < questions.length - 1) {
-    setCurrentQuestionIndex((prev) => prev + 1);
-   
-  }
-};
+    if (currentQuestionIndex < questions.length - 1) {
+      setCurrentQuestionIndex((prev) => prev + 1);
 
-const goToPreviousQuestion = () => {
-  if (currentQuestionIndex > 0) {
-    setCurrentQuestionIndex((prev) => prev - 1);
-    
-  }
-};
+    }
+  };
+
+  const goToPreviousQuestion = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex((prev) => prev - 1);
+
+    }
+  };
 
 
   // Xử lý khi hoàn thành bài thi
@@ -91,7 +91,12 @@ const goToPreviousQuestion = () => {
 
   // Xử lý khi người dùng muốn làm lại bài
   const handleRetry = () => {
-    setUserAnswers([])
+    const newAnser = questions.map((item: any) => ({
+      questionId: item.id,
+      value: null,
+      correct: null,
+    }))
+    setUserAnswers(newAnser)
     setCurrentQuestionIndex(0)
     setIsFinished(false)
     setShowResults(false)
@@ -107,7 +112,12 @@ const goToPreviousQuestion = () => {
       console.error("Lỗi khi tải exam:", error.message);
     } else {
       setQuestions(data[0].question);
-      setUserAnswers([]);
+      const newAnser = data[0].question.map((item: any) => ({
+        questionId: item.id,
+        value: null,
+        correct: null,
+      }))
+      setUserAnswers(newAnser);
       setCurrentQuestionIndex(0);
       setScore(0);
       setIsFinished(false);
@@ -116,21 +126,22 @@ const goToPreviousQuestion = () => {
     setIsLoading(false);
   }
   useEffect(() => {
-window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 
-}, [currentQuestionIndex]);
+  }, [currentQuestionIndex]);
+  const handleShowAnswer = () => {
+    setShowAnswer(true);
+  }
   if (isLoading) return <div>Đang tải dữ liệu chờ tí</div>
   // Tính phần trăm tiến độ
   const progressPercentage = ((currentQuestionIndex + 1) / questions.length) * 100
-
   // Lấy câu hỏi hiện tại
   const currentQuestion = questions[currentQuestionIndex]
-
   // Lấy câu trả lời của người dùng cho câu hỏi hiện tại
-  const currentAnswer = userAnswers.find((a) => a.questionId === currentQuestion.id)?.value || "";
+  const currentAnswer = userAnswers[currentQuestionIndex]?.value || "";
 
   return (
-    <div className="flex h-100vh overflow-hidden" >
+    <div className="flex  overflow-hidden" >
       {/* Sidebar */}
       <div
         className={cn(
@@ -149,7 +160,7 @@ window.scrollTo({ top: 0, behavior: 'smooth' });
             </Button>
           )}
         </div>
-        <div className="p-2 overflow-y-auto h-full">
+        <div className="p-2 overflow-y-auto h-100vh">
           <ListExam handleSelectQuizSet={handleSelectQuizSet} />
         </div>
       </div>
@@ -204,13 +215,13 @@ window.scrollTo({ top: 0, behavior: 'smooth' });
                 )}
               </CardHeader>
               <CardContent>
-                <RadioGroup value={currentAnswer} onValueChange={handleAnswerChange} className="space-y-3">
+                <RadioGroup value={currentAnswer} onValueChange={() => handleAnswerChange} className="space-y-3">
                   {currentQuestion?.answer.map((option, index) => (
                     <div
                       key={index}
                       className={`flex items-center space-x-2 border rounded-lg p-4 transition-colors ${currentAnswer === option.content ? "bg-blue-50 border-blue-300" : "hover:bg-gray-50"
                         }`}
-                      onClick={() => handleAnswerChange(option.content)}
+                      onClick={() => handleAnswerChange(option.content, option.is_correct)}
                     >
                       <RadioGroupItem value={option.content} id={`option-${index}`} className="text-blue-600" />
                       <Label htmlFor={`option-${index}`} className="flex-1 cursor-pointer font-medium">
@@ -225,15 +236,20 @@ window.scrollTo({ top: 0, behavior: 'smooth' });
                   <ChevronLeft className="h-4 w-4 mr-2" /> Câu trước
                 </Button>
 
-                {currentQuestionIndex < questions.length - 1 ? (
-                  <Button onClick={goToNextQuestion}>
-                    Câu tiếp theo <ChevronRight className="h-4 w-4 ml-2" />
+                <div className="flex gap-2">
+                  <Button onClick={handleShowAnswer}>
+                    Xem đáp án
                   </Button>
-                ) : (
-                  <Button onClick={handleFinish} className="bg-green-600 hover:bg-green-700">
-                    Nộp bài
-                  </Button>
-                )}
+                  {currentQuestionIndex < questions.length - 1 ? (
+                    <Button onClick={goToNextQuestion}>
+                      Câu tiếp theo <ChevronRight className="h-4 w-4 ml-2" />
+                    </Button>
+                  ) : (
+                    <Button onClick={handleFinish} className="bg-green-600 hover:bg-green-700">
+                      Nộp bài
+                    </Button>
+                  )}
+                </div>
               </CardFooter>
             </Card>
 
@@ -310,6 +326,43 @@ window.scrollTo({ top: 0, behavior: 'smooth' });
               Làm lại
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>}
+
+      {showAnswer && <Dialog open={showAnswer} onOpenChange={setShowAnswer}>
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-auto">
+          <DialogHeader >
+            <DialogTitle >Đáp án</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="text-center mb-4">
+              <div className="text-lg font-bold text-blue-600 mb-2">
+                Câu {currentQuestionIndex + 1}: {currentQuestion?.content}
+
+              </div>
+              {currentQuestion?.image && (
+                <div className="mt-4">
+                  <img
+                    src={currentQuestion.image}
+                    alt={`Ảnh minh họa câu ${currentQuestionIndex + 1}`}
+                    className="max-w-full max-h-[500px] rounded-md border object-cover"
+                  />
+                </div>
+              )}
+            </div>
+            <div className="space-y-2">
+              <p className="text-gray-500">Đáp án đúng</p>
+              {currentQuestion.answer
+                .filter((item) => item.is_correct)
+                .map((item, index) => (
+                  <p key={index} className="text-green-600">
+                    {item.content}
+                  </p>
+                ))}
+            </div>
+
+          </div>
+
         </DialogContent>
       </Dialog>}
     </div>
