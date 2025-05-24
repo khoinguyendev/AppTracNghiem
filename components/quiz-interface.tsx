@@ -21,6 +21,8 @@ import { supabase } from "@/lib/supabaseClient"
 import { IQuestion } from "@/types/Questions"
 import ListExam from "./list-exam"
 import { IExam } from "@/types/Exam"
+import { toast } from 'sonner'
+import { useUser } from "@/context/UserContext"
 
 
 type UserAnswer = {
@@ -29,6 +31,7 @@ type UserAnswer = {
   correct: boolean | null;
 };
 export default function QuizInterface() {
+  const { user } = useUser()
   const [questions, setQuestions] = useState<IQuestion[]>([])
   const [exam, setExam] = useState<IExam | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
@@ -37,7 +40,7 @@ export default function QuizInterface() {
   const [isFinished, setIsFinished] = useState(false)
   const [showResults, setShowResults] = useState(false)
   const [showAnswer, setShowAnswer] = useState(false)
-
+  const [isLoadingAdd, setIsLoadingAdd] = useState(false)
   const [score, setScore] = useState(0)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [isLoading, setIsLoading] = useState(false);
@@ -101,6 +104,41 @@ export default function QuizInterface() {
     setIsFinished(false)
     setShowResults(false)
   }
+const handleAddToReview = async () => {
+  if (!user?.id || !currentQuestion?.id) {
+    toast.error("Thiếu thông tin người dùng hoặc câu hỏi")
+    return
+  }
+setIsLoadingAdd(true)
+  // 1. Kiểm tra xem đã có trong review chưa
+  const { data: existing, error: checkError } = await supabase
+    .from('review_questions')
+    .select('id')
+    .eq('user_id', user.id)
+    .eq('question_id', currentQuestion.id)
+    .single() // vì mỗi user chỉ nên có 1 bản ghi cho 1 câu hỏi
+
+  
+  if (existing) {
+    toast.info("Câu hỏi đã có trong gợi nhớ!")
+    setIsLoadingAdd(false)
+    return
+  }
+
+  // 2. Nếu chưa có, thì thêm vào
+  const { error: insertError } = await supabase.from('review_questions').insert({
+    user_id: user.id,
+    question_id: currentQuestion.id,
+  })
+
+   if (insertError) {
+      toast.error("Lỗi khi thêm câu hỏi: " + insertError.message)
+    } else {
+      toast.success("Đã thêm vào gợi nhớ!")
+    }
+
+    setIsLoadingAdd(false)
+}
 
   // Xử lý khi chọn đề thi khác
   const handleSelectQuizSet = async (exam: IExam) => {
@@ -231,26 +269,40 @@ export default function QuizInterface() {
                   ))}
                 </RadioGroup>
               </CardContent>
-              <CardFooter className="flex justify-between">
-                <Button variant="outline" onClick={goToPreviousQuestion} disabled={currentQuestionIndex === 0}>
-                  <ChevronLeft className="h-4 w-4 mr-2" /> Câu trước
+              <CardFooter className="flex flex-col md:flex-row justify-between gap-4 md:items-center">
+                <Button
+                  variant="outline"
+                  onClick={goToPreviousQuestion}
+                  disabled={currentQuestionIndex === 0}
+                  className="w-full md:w-auto"
+                >
+                  <ChevronLeft className="h-4 w-4 mr-2" />
+                  Câu trước
                 </Button>
 
-                <div className="flex gap-2">
-                  <Button onClick={handleShowAnswer}>
+                <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto justify-end">
+                  <Button onClick={handleShowAnswer} className="w-full sm:w-auto order-2">
                     Xem đáp án
                   </Button>
+                  <Button onClick={handleAddToReview}  className="w-full sm:w-auto order-3">
+                          {isLoadingAdd ? "Đang thêm..." : "Thêm vào gợi nhớ"}
+
+                  </Button>
                   {currentQuestionIndex < questions.length - 1 ? (
-                    <Button onClick={goToNextQuestion}>
+                    <Button onClick={goToNextQuestion} className="w-full sm:w-auto order-1">
                       Câu tiếp theo <ChevronRight className="h-4 w-4 ml-2" />
                     </Button>
                   ) : (
-                    <Button onClick={handleFinish} className="bg-green-600 hover:bg-green-700">
+                    <Button
+                      onClick={handleFinish}
+                      className="bg-green-600 hover:bg-green-700 w-full sm:w-auto order-1"
+                    >
                       Nộp bài
                     </Button>
                   )}
                 </div>
               </CardFooter>
+
             </Card>
 
             {/* Danh sách câu hỏi */}

@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { useEffect, useState } from "react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import {
@@ -13,8 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Bell, LogOut, Settings, User } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
+import {  LogOut, Settings, User,ClipboardList  } from "lucide-react"
 import { useUser } from "@/context/UserContext"
 import { supabase } from "@/lib/supabaseClient"
 
@@ -22,9 +20,7 @@ export default function Header() {
   const { user, setUser } = useUser()
 
   const router = useRouter()
-  const [notifications, setNotifications] = useState(3)
 
-  const clearNotifications = () => setNotifications(0)
 
   const handleLogout = async () => {
     setUser(null);
@@ -42,7 +38,7 @@ export default function Header() {
       <div className="container flex h-14 items-center">
         <div className="ms-4 flex">
           <Link href="/" className="flex items-center space-x-2">
-            <span className="font-bold text-xl">App trắc nghiệm</span>
+            <span className="font-bold text-xl">App trắc nghiệm(KN)</span>
           </Link>
         </div>
 
@@ -50,36 +46,24 @@ export default function Header() {
 
         <nav className="flex items-center space-x-4">
           {/* Thông báo */}
+          <Link href={"/review-question"} className="relative">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="relative">
-                <Bell className="h-5 w-5" />
-                {notifications > 0 && (
+                <ClipboardList className="h-5 w-5" />
+                {/* {notifications > 0 && (
                   <Badge
                     variant="destructive"
                     className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
                   >
                     {notifications}
                   </Badge>
-                )}
+                )} */}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Thông báo</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {notifications > 0 ? (
-                <>
-                  <DropdownMenuItem>Đề thi mới đã được thêm vào</DropdownMenuItem>
-                  <DropdownMenuItem>Bạn có kết quả bài thi mới</DropdownMenuItem>
-                  <DropdownMenuItem>Hạn nộp bài tập sắp đến hạn</DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={clearNotifications}>Đánh dấu tất cả là đã đọc</DropdownMenuItem>
-                </>
-              ) : (
-                <DropdownMenuItem disabled>Không có thông báo mới</DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
+            
           </DropdownMenu>
+          </Link>
 
           {/* Avatar + menu người dùng */}
           <DropdownMenu>
