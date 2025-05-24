@@ -104,41 +104,41 @@ export default function QuizInterface() {
     setIsFinished(false)
     setShowResults(false)
   }
-const handleAddToReview = async () => {
-  if (!user?.id || !currentQuestion?.id) {
-    toast.error("Thiếu thông tin người dùng hoặc câu hỏi")
-    return
-  }
-setIsLoadingAdd(true)
-  // 1. Kiểm tra xem đã có trong review chưa
-  const { data: existing, error: checkError } = await supabase
-    .from('review_questions')
-    .select('id')
-    .eq('user_id', user.id)
-    .eq('question_id', currentQuestion.id)
-    .single() // vì mỗi user chỉ nên có 1 bản ghi cho 1 câu hỏi
+  const handleAddToReview = async () => {
+    if (!user?.id || !currentQuestion?.id) {
+      toast.error("Thiếu thông tin người dùng hoặc câu hỏi")
+      return
+    }
+    setIsLoadingAdd(true)
+    // 1. Kiểm tra xem đã có trong review chưa
+    const { data: existing, error: checkError } = await supabase
+      .from('review_questions')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('question_id', currentQuestion.id)
+      .single() // vì mỗi user chỉ nên có 1 bản ghi cho 1 câu hỏi
 
-  
-  if (existing) {
-    toast.info("Câu hỏi đã có trong gợi nhớ!")
-    setIsLoadingAdd(false)
-    return
-  }
 
-  // 2. Nếu chưa có, thì thêm vào
-  const { error: insertError } = await supabase.from('review_questions').insert({
-    user_id: user.id,
-    question_id: currentQuestion.id,
-  })
+    if (existing) {
+      toast.info("Câu hỏi đã có trong gợi nhớ!")
+      setIsLoadingAdd(false)
+      return
+    }
 
-   if (insertError) {
+    // 2. Nếu chưa có, thì thêm vào
+    const { error: insertError } = await supabase.from('review_questions').insert({
+      user_id: user.id,
+      question_id: currentQuestion.id,
+    })
+
+    if (insertError) {
       toast.error("Lỗi khi thêm câu hỏi: " + insertError.message)
     } else {
       toast.success("Đã thêm vào gợi nhớ!")
     }
 
     setIsLoadingAdd(false)
-}
+  }
 
   // Xử lý khi chọn đề thi khác
   const handleSelectQuizSet = async (exam: IExam) => {
@@ -240,7 +240,16 @@ setIsLoadingAdd(true)
             <Card className="shadow-lg" >
               <CardHeader  >
                 <CardTitle className="text-xl">
-                  Câu {currentQuestionIndex + 1}: {currentQuestion?.content}
+                  Câu {currentQuestionIndex + 1}:{" "}
+                  {currentQuestion?.content.startsWith("https") ? (
+                    <img
+                      src={currentQuestion.content}
+                      alt={`Câu ${currentQuestionIndex + 1}`}
+                      className="max-w-full max-h-[200px] rounded-md border object-cover"
+                    />
+                  ) : (
+                    currentQuestion?.content
+                  )}
                 </CardTitle>
                 {currentQuestion?.image && (
                   <div className="mt-4">
@@ -284,8 +293,8 @@ setIsLoadingAdd(true)
                   <Button onClick={handleShowAnswer} className="w-full sm:w-auto order-2">
                     Xem đáp án
                   </Button>
-                  <Button onClick={handleAddToReview}  className="w-full sm:w-auto order-3">
-                          {isLoadingAdd ? "Đang thêm..." : "Thêm vào gợi nhớ"}
+                  <Button onClick={handleAddToReview} className="w-full sm:w-auto order-3">
+                    {isLoadingAdd ? "Đang thêm..." : "Thêm vào gợi nhớ"}
 
                   </Button>
                   {currentQuestionIndex < questions.length - 1 ? (
@@ -389,7 +398,16 @@ setIsLoadingAdd(true)
           <div className="py-4">
             <div className="text-center mb-4">
               <div className="text-lg font-bold text-blue-600 mb-2">
-                Câu {currentQuestionIndex + 1}: {currentQuestion?.content}
+                Câu {currentQuestionIndex + 1}:{" "}
+                  {currentQuestion?.content.startsWith("https") ? (
+                    <img
+                      src={currentQuestion.content}
+                      alt={`Câu ${currentQuestionIndex + 1}`}
+                      className="max-w-full max-h-[200px] rounded-md border object-cover"
+                    />
+                  ) : (
+                    currentQuestion?.content
+                  )}
 
               </div>
               {currentQuestion?.image && (

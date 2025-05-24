@@ -90,6 +90,7 @@ const ReviewQuestionList = () => {
         </div>
 
         {questions.map((q, index) => (
+          console.log(q),
           <div key={q.id} className="border p-4 rounded-lg shadow-sm relative">
             {/* Nút xóa */}
             <button
@@ -100,7 +101,16 @@ const ReviewQuestionList = () => {
             </button>
 
             <div className="font-semibold mb-2">
-              Câu {index + 1}: {q.question.content}
+               Câu {index + 1}:{" "}
+                  {q.question.content.startsWith("https") ? (
+                    <img
+                      src={q.question.content}
+                      alt={`Câu ${index + 1}`}
+                      className="max-w-full max-h-[200px] rounded-md border object-cover"
+                    />
+                  ) : (
+                    q.question.content
+                  )}
             </div>
             {q.question.image && (
               <img
