@@ -1,29 +1,46 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
+import { AuthProvider } from "@/context/AuthContext";
+import { useFonts } from "expo-font";
+import { SplashScreen, Stack } from "expo-router";
+import { useEffect } from "react";
+import Toast from "react-native-toast-message";
+import "./global.css";
 
-import { useColorScheme } from '@/hooks/useColorScheme';
+SplashScreen.preventAutoHideAsync(); // ⛔ Giữ splash không tự ẩn
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-  const [loaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+  const [fontsLoaded] = useFonts({
+    "Poppins-Black": require("@/assets/fonts/Poppins-Black.ttf"),
+    "Poppins-Bold": require("@/assets/fonts/Poppins-Bold.ttf"),
+    "Poppins-ExtraBold": require("@/assets/fonts/Poppins-ExtraBold.ttf"),
+    "Poppins-ExtraLight": require("@/assets/fonts/Poppins-ExtraLight.ttf"),
+    "Poppins-Light": require("@/assets/fonts/Poppins-Light.ttf"),
+    "Poppins-Medium": require("@/assets/fonts/Poppins-Medium.ttf"),
+    "Poppins-Regular": require("@/assets/fonts/Poppins-Regular.ttf"),
+    "Poppins-SemiBold": require("@/assets/fonts/Poppins-SemiBold.ttf"),
   });
 
-  if (!loaded) {
-    // Async font loading only occurs in development.
-    return null;
-  }
+  // Ẩn splash sau khi load xong font
+  useEffect(() => {
+    if (fontsLoaded) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+
+ 
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+      <AuthProvider>
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              animation: "fade",
+            }}
+          >
+            <Stack.Screen name="(auth)" />
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="exam/[id]" />
+          </Stack>
+          <Toast />
+      </AuthProvider>
   );
 }

@@ -1,45 +1,67 @@
-import { Tabs } from 'expo-router';
-import React from 'react';
-import { Platform } from 'react-native';
+import ProtectedTabs from "@/components/ProtectedTabs";
+import { Ionicons } from "@expo/vector-icons";
+import { Tabs } from "expo-router";
 
-import { HapticTab } from '@/components/HapticTab';
-import { IconSymbol } from '@/components/ui/IconSymbol';
-import TabBarBackground from '@/components/ui/TabBarBackground';
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
+
+const TabBarIcon = ({ name, color, size, focused }: { name: keyof typeof Ionicons.glyphMap, color: string, size: number, focused: boolean }) => {
+  return (
+    <Ionicons name={name} color={focused ? "#eb9e34" : color} size={size} />
+  );
+};
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
-        tabBarButton: HapticTab,
-        tabBarBackground: TabBarBackground,
-        tabBarStyle: Platform.select({
-          ios: {
-            // Use a transparent background on iOS to show the blur effect
-            position: 'absolute',
+    <ProtectedTabs>
+
+      <Tabs
+        screenOptions={{
+          headerShown: false,
+          tabBarStyle: {
+            backgroundColor: "#030014",
+            borderTopColor: "#030014",
+
           },
-          default: {},
-        }),
-      }}>
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          tabBarActiveTintColor: "#eb9e34", // 👈 màu icon và chữ khi active
+          // tabBarShowLabel: false,
         }}
-      />
-      <Tabs.Screen
-        name="explore"
-        options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
-        }}
-      />
-    </Tabs>
+      >
+        <Tabs.Screen
+          name="index"
+          options={{
+            title: "Trang chủ",
+            tabBarIcon: ({ color, size, focused }) => (
+              <TabBarIcon name="home" color={color} size={size} focused={focused} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="saved"
+          options={{
+            title: "Lưu",
+            tabBarIcon: ({ color, size, focused }) => (
+              <TabBarIcon name="heart" color={color} size={size} focused={focused} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="exam"
+          options={{
+            title: "Đề",
+            tabBarIcon: ({ color, size, focused }) => (
+              <TabBarIcon name="book" color={color} size={size} focused={focused} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="profile"
+          options={{
+            title: "Tôi",
+            tabBarIcon: ({ color = "#eb9e34", size, focused }) => (
+              <TabBarIcon name="person" color={color} size={size} focused={focused} />
+            ),
+          }}
+        />
+      </Tabs>
+    </ProtectedTabs>
   );
 }
